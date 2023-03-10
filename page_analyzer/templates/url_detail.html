@@ -2,27 +2,27 @@
 
 {% block content %}
 <div class="container-lg mt-3">
-  <h1>Сайт: {{ site[0][1] }}</h1>
+  <h1>Сайт: {{ site[1] }}</h1>
   <div class="table-responsive">
     <table class="table table-bordered table-hover text-nowrap" data-test="url">
       <tbody>
         <tr>
           <td>ID</td>
-          <td>{{ site[0][0] }}</td>
+          <td>{{ site[0] }}</td>
         </tr>
         <tr>
           <td>Имя</td>
-          <td>{{ site[0][1] }}</td>
+          <td>{{ site[1] }}</td>
         </tr>
         <tr>
           <td>Дата создания</td>
-          <td>{{ site[0][2].strftime('%Y-%m-%d') }}</td>
+          <td>{{ site[2].strftime('%Y-%m-%d') }}</td>
         </tr>
       </tbody>
     </table>
   </div>
   <h2 class="mt-5 mb-3">Проверки</h2>
-  <form method="post" action="{{ url_for('url_check', id=site[0][0]) }}">
+  <form method="post" action="{{ url_for('url_check', id=site[0]) }}">
     <input type="submit" class="btn btn-primary" value="Запустить проверку">
   </form>
   <div>
