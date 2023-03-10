@@ -52,6 +52,7 @@ cur.execute(
     description text,
     created_at timestamp
 );''')
+conn.commit()
 
 
 
