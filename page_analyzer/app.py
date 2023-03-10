@@ -18,7 +18,9 @@ from .html import get_info_about_site
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, ".env"))
-conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+
+def get_conn():
+    return psycopg2.connect(os.getenv("DATABASE_URL"))
 
 
 def normalize_url(url):
@@ -31,7 +33,7 @@ app = Flask(__name__)
 
 app.secret_key = os.getenv("SECRET_KEY")
 
-
+conn = get_conn()
 # create a cursor
 cur = conn.cursor()
 
@@ -53,6 +55,9 @@ cur.execute(
     created_at timestamp
 );''')
 conn.commit()
+cur.close()
+conn.close()
+
 
 
 
@@ -64,11 +69,13 @@ def index():
 
 @app.route('/urls', methods=('GET', 'POST'))
 def urls():
+    conn = get_conn()
     if request.method == 'POST':
         url = request.form['url']
         if validators.url(url) and validators.length(url, max=255):
             normalized_url = normalize_url(url)
             try:
+                cur = conn.cursor()
                 cur.execute('''
                             INSERT INTO urls(name, created_at)
                             VALUES (%s, %s)
@@ -77,18 +84,24 @@ def urls():
                             (normalized_url, datetime.datetime.now()))
                 id = cur.fetchone()[0]
                 conn.commit()
+                cur.close()
+                conn.close()
                 flash('Страница успешно добавлена', 'info')
                 return redirect(url_for('url', id=id))
             except psycopg2.errors.UniqueViolation:
                 conn.rollback()
+                cur = conn.cursor()
                 cur.execute('SELECT id FROM urls WHERE name = %s;',
                             (normalized_url,))
                 id = cur.fetchone()[0]
+                cur.close()
+                conn.close()
                 flash('Страница уже существует', 'info')
                 return redirect(url_for('url', id=id))
         flash('Некорректный URL', 'danger')
         return redirect(url_for('index'))
     if request.method == 'GET':
+        cur = conn.cursor()
         cur.execute('SELECT * FROM urls ORDER BY id DESC;')
         sites = cur.fetchall()
         print(sites)
@@ -98,13 +111,18 @@ def urls():
                     ORDER BY url_id DESC, created_at DESC;
                     ''')
         checks = cur.fetchall()
+        cur.close()
+        conn.close()
         print(checks)
         return render_template('urls.html', sites=sites, checks=checks)
 
 
 @app.route('/urls/<id>', methods=('GET',))
 def url(id):
+    conn = get_conn()
+    cur = conn.cursor()
     messages = get_flashed_messages(with_categories=True)
+    conn.cursor()
     cur.execute('SELECT * FROM urls WHERE id = %s;', (id,))
     site = cur.fetchone()
     cur.execute('''
@@ -114,6 +132,8 @@ def url(id):
                 ''',
                 (id,))
     checks = cur.fetchall()
+    cur.close()
+    conn.close()
     return render_template('url_detail.html',
                            site=site,
                            checks=checks,
@@ -122,6 +142,8 @@ def url(id):
 
 @app.route('/urls/<id>/checks', methods=('POST',))
 def url_check(id):
+    conn = get_conn()
+    cur = conn.cursor()
     cur.execute('SELECT name FROM urls WHERE id = %s;', (id,))
     url, = cur.fetchone()
     print(url)
@@ -134,6 +156,8 @@ def url_check(id):
                     ''',
                     data)
         conn.commit()
+        cur.close()
+        conn.close()
         flash('Страница успешно проверена', 'success')
         return redirect(url_for('url', id=id))
     except requests.exceptions.RequestException as e:
