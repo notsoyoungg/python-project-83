@@ -122,7 +122,7 @@ def url(id):
 @app.route('/urls/<id>/checks', methods=('POST',))
 def url_check(id):
     cur.execute('SELECT name FROM urls WHERE id = %s;', (id,))
-    url = cur.fetchone()[0]
+    url, = cur.fetchone()
     print(url)
     try:
         data = get_info_about_site(url, id)
