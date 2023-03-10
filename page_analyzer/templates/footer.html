@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block footer %}
+    <h1>Сайты</h1>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+          <tbody>
+            <tr>
+              <th>ID</th>
+              <th>Имя</th>
+              <th>Последняя проверка</th>
+              <th>Код ответа</th>
+            </tr>
+            {% for site in sites %}
+            <tr>
+                <td>{{ site[0] }}</td>
+                <td><a href="{{ site[1] }}">{{ site[1] }}</a></td>
+                <td></td>
+                <td></td>
+            </tr> 
+            {% endfor %}
+{% endblock %}

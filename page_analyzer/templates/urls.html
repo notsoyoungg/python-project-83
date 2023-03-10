@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Сайты</h1>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+          <tbody>
+            <tr>
+              <th>ID</th>
+              <th>Имя</th>
+              <th>Последняя проверка</th>
+              <th>Код ответа</th>
+            </tr>
+            {% for site in sites %}
+                <tr>
+                    <td>{{ site[0] }}</td>
+                    <td><a href="{{ url_for('url', id=site[0]) }}">{{ site[1] }}</a></td>
+                    {% if checks[site[0] - 1] %}
+                    <td>{{ checks[site[0] - 1][0].strftime('%Y-%m-%d') }}</td>
+                    <td>{{ checks[site[0] - 1][1] }}</td>
+                    {% else %}
+                    <td></td>
+                    <td></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+{% endblock %}
