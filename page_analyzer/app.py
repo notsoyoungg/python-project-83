@@ -1,4 +1,10 @@
-from flask import Flask, render_template, request, url_for, redirect, flash, get_flashed_messages
+from flask import (Flask,
+                   render_template,
+                   request,
+                   url_for,
+                   redirect,
+                   flash,
+                   get_flashed_messages)
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -48,8 +54,6 @@ cur = conn.cursor()
 # );''')
 
 
-
-
 @app.route('/')
 def index():
     messages = get_flashed_messages(with_categories=True)
@@ -63,14 +67,18 @@ def urls():
         if validators.url(url) and validators.length(url, max=255):
             normalized_url = normalize_url(url)
             try:
-                cur.execute('INSERT INTO urls (name, created_at) VALUES (%s, %s)',
+                cur.execute('''
+                            INSERT INTO urls(name, created_at)
+                            VALUES (%s, %s)
+                            ''',
                             (normalized_url, datetime.datetime.now()))
                 id = cur.fetchone()[0]
                 flash('Страница успешно добавлена', 'info')
                 return redirect(url_for('url', id=id))
             except psycopg2.errors.UniqueViolation:
                 conn.rollback()
-                cur.execute('SELECT id FROM urls WHERE name = %s;', (normalized_url,))
+                cur.execute('SELECT id FROM urls WHERE name = %s;',
+                            (normalized_url,))
                 id = cur.fetchone()[0]
                 flash('Страница уже существует', 'info')
                 return redirect(url_for('url', id=id))
@@ -79,7 +87,11 @@ def urls():
     if request.method == 'GET':
         cur.execute('SELECT * FROM urls ORDER BY id DESC;')
         sites = cur.fetchall()
-        cur.execute('SELECT DISTINCT ON (url_id) created_at, status_code FROM url_checks ORDER BY url_id DESC, created_at DESC;')
+        cur.execute('''
+                    SELECT DISTINCT ON (url_id) created_at, status_code
+                    FROM url_checks
+                    ORDER BY url_id DESC, created_at DESC;
+                    ''')
         checks = cur.fetchall()
         return render_template('urls.html', sites=sites, checks=checks)
 
@@ -89,9 +101,17 @@ def url(id):
     messages = get_flashed_messages(with_categories=True)
     cur.execute('SELECT * FROM urls WHERE id = %s;', (id,))
     site = cur.fetchone()
-    cur.execute('SELECT * FROM url_checks WHERE url_id = %s ORDER BY id DESC;', (id,))
+    cur.execute('''
+                SELECT * FROM url_checks
+                WHERE url_id = %s
+                ORDER BY id DESC;
+                ''',
+                (id,))
     checks = cur.fetchall()
-    return render_template('url_detail.html', site=site, checks=checks, messages=messages)
+    return render_template('url_detail.html',
+                           site=site,
+                           checks=checks,
+                           messages=messages)
 
 
 @app.route('/urls/<id>/checks', methods=('POST',))
@@ -101,7 +121,12 @@ def url_check(id):
     print(url)
     try:
         data = get_info_about_site(url, id)
-        cur.execute('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (%s, %s, %s, %s, %s, %s)', data)
+        cur.execute('''
+                    INSERT INTO url_checks
+                    (url_id, status_code, h1, title, description, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ''',
+                    data)
         flash('Страница успешно проверена', 'success')
         return redirect(url_for('url', id=id))
     except requests.exceptions.RequestException as e:
