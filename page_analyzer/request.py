@@ -26,3 +26,4 @@ print([None] * 5)
 # except requests.exceptions.RequestException as e:
 #     print(f'вылетело исключение {e}')
 print(len('Живое онлайн сообщество программистов и разработчиков на JS, Python, Java, PHP, Ruby. Авторские программы обучения с практикой и готовыми проектами в резюме. Помощь в трудоустройстве после'))
+print(len([[]]))

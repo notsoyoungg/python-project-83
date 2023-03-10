@@ -108,7 +108,9 @@ def urls():
             normalized_url = normalize_url(url)
             name = get_data_from_db(('SELECT id, name FROM urls WHERE name = %s', (normalized_url,)))
             print(name)
-            if name[0][0][1] == normalized_url:
+            print(name[0])
+            # print(name[0][1])
+            if len(name[0]) != 0 and name[0][0][1] == normalized_url:
                 flash('Страница уже существует', 'info')
                 return redirect(url_for('url', id=name[0][0][0]))
             insert_data_to_db('INSERT INTO urls (name, created_at) VALUES (%s, %s)',
