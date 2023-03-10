@@ -76,6 +76,7 @@ def urls():
                             ''',
                             (normalized_url, datetime.datetime.now()))
                 id = cur.fetchone()[0]
+                conn.commit()
                 flash('Страница успешно добавлена', 'info')
                 return redirect(url_for('url', id=id))
             except psycopg2.errors.UniqueViolation:
@@ -132,6 +133,7 @@ def url_check(id):
                     VALUES (%s, %s, %s, %s, %s, %s);
                     ''',
                     data)
+        conn.commit()
         flash('Страница успешно проверена', 'success')
         return redirect(url_for('url', id=id))
     except requests.exceptions.RequestException as e:
