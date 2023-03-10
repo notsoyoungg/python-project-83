@@ -54,6 +54,7 @@ cur.execute(
 );''')
 
 
+
 @app.route('/')
 def index():
     messages = get_flashed_messages(with_categories=True)
@@ -70,7 +71,7 @@ def urls():
                 cur.execute('''
                             INSERT INTO urls(name, created_at)
                             VALUES (%s, %s)
-                            RETURNING id
+                            RETURNING id;
                             ''',
                             (normalized_url, datetime.datetime.now()))
                 id = cur.fetchone()[0]
@@ -88,12 +89,14 @@ def urls():
     if request.method == 'GET':
         cur.execute('SELECT * FROM urls ORDER BY id DESC;')
         sites = cur.fetchall()
+        print(sites)
         cur.execute('''
                     SELECT DISTINCT ON (url_id) created_at, status_code
                     FROM url_checks
                     ORDER BY url_id DESC, created_at DESC;
                     ''')
         checks = cur.fetchall()
+        print(checks)
         return render_template('urls.html', sites=sites, checks=checks)
 
 
@@ -125,7 +128,7 @@ def url_check(id):
         cur.execute('''
                     INSERT INTO url_checks
                     (url_id, status_code, h1, title, description, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s);
                     ''',
                     data)
         flash('Страница успешно проверена', 'success')
