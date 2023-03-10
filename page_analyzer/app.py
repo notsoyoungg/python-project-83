@@ -115,7 +115,7 @@ def urls():
                 return redirect(url_for('url', id=name[0][0][0]))
             insert_data_to_db('INSERT INTO urls (name, created_at) VALUES (%s, %s)',
                         (normalized_url, datetime.datetime.now()))
-            flash('Страница спешно добавлена', 'info')
+            flash('Страница успешно добавлена', 'info')
             return redirect(url_for('index'))
         flash('Некорректный URL', 'danger')
         return redirect(url_for('index'))
