@@ -14,43 +14,11 @@ from urllib.parse import urlparse
 import datetime
 import requests
 from .html import get_info_about_site
+from .db import select_from_db, insert_to_db
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, ".env"))
-
-
-def get_conn():
-    return psycopg2.connect(os.getenv("DATABASE_URL"))
-
-
-def select_from_db(*args, fetch='one'):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute(*args)
-    if fetch != 'one':
-        data = cur.fetchall()
-        cur.close()
-        conn.close()
-        return data
-    data = cur.fetchone()
-    cur.close()
-    conn.close()
-    return data
-
-
-def insert_to_db(query, params):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute(query, params)
-    try:
-        data = cur.fetchone()
-    except psycopg2.ProgrammingError:
-        data = ()
-    conn.commit()
-    cur.close()
-    conn.close()
-    return data
 
 
 def normalize_url(url):
@@ -59,34 +27,7 @@ def normalize_url(url):
 
 
 app = Flask(__name__)
-
-
 app.secret_key = os.getenv("SECRET_KEY")
-
-conn = get_conn()
-# create a cursor
-cur = conn.cursor()
-
-cur.execute(
-    '''CREATE TABLE IF NOT EXISTS urls (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name       varchar(255) UNIQUE,
-    created_at timestamp
-);''')
-
-cur.execute(
-    '''CREATE TABLE IF NOT EXISTS url_checks (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    url_id bigint REFERENCES urls(id),
-    status_code integer,
-    h1 text,
-    title text,
-    description text,
-    created_at timestamp
-);''')
-conn.commit()
-cur.close()
-conn.close()
 
 
 @app.route('/')
@@ -103,11 +44,11 @@ def urls():
             normalized_url = normalize_url(url)
             try:
                 data = insert_to_db('''
-                            INSERT INTO urls(name, created_at)
-                            VALUES (%s, %s)
-                            RETURNING id;
-                            ''',
-                            (normalized_url, datetime.datetime.now()))
+                                    INSERT INTO urls(name, created_at)
+                                    VALUES (%s, %s)
+                                    RETURNING id;
+                                    ''',
+                                    (normalized_url, datetime.datetime.now()))
                 id = data[0]
                 flash('Страница успешно добавлена', 'info')
                 return redirect(url_for('url', id=id))
@@ -123,13 +64,18 @@ def urls():
                                url=url_for('index'),
                                messages=messages), 422
     if request.method == 'GET':
-        sites = select_from_db('SELECT * FROM urls ORDER BY id DESC;', fetch='all')
-        checks = select_from_db('''
-                                SELECT DISTINCT ON (url_id) created_at, status_code
-                                FROM url_checks
-                                ORDER BY url_id DESC, created_at DESC;
-                                ''', fetch='all')
-        return render_template('urls.html', sites=sites, checks=checks)
+        sites = select_from_db('''
+                               SELECT distinct on (urls.id)
+                               urls.id,
+                               urls.name,
+                               url_checks.created_at,
+                               url_checks.status_code
+                               FROM urls LEFT JOIN url_checks
+                               ON urls.id=url_checks.url_id
+                               ORDER BY urls.id DESC, created_at desc;
+                               ''',
+                               fetch='all')
+        return render_template('urls.html', sites=sites)
 
 
 @app.route('/urls/<id>', methods=('GET',))
@@ -164,6 +110,6 @@ def url_check(id):
                      data)
         flash('Страница успешно проверена', 'success')
         return redirect(url_for('url', id=id))
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         flash('Произошла ошибка при проверке', 'danger')
         return redirect(url_for('url', id=id))

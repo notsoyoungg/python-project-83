@@ -15,13 +15,8 @@
                 <tr>
                     <td>{{ site[0] }}</td>
                     <td><a href="{{ url_for('url', id=site[0]) }}">{{ site[1] }}</a></td>
-                    {% if checks[site[0] - 1] %}
-                    <td>{{ checks[site[0] - 1][0].strftime('%Y-%m-%d') }}</td>
-                    <td>{{ checks[site[0] - 1][1] }}</td>
-                    {% else %}
-                    <td></td>
-                    <td></td>
-                    {% endif %}
+                    <td>{{ site[2].strftime('%Y-%m-%d') if site[2] }}</td>
+                    <td>{{ site[3] if site[3] }}</td>
                 </tr>
             {% endfor %}
           </tbody>
