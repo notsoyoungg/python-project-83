@@ -162,7 +162,8 @@ def url_check(id):
         conn.close()
         flash('Страница успешно проверена', 'success')
         return redirect(url_for('url', id=id))
-    except requests.exceptions.RequestException as e:
+    except (requests.exceptions.RequestException,
+            requests.exceptions.HTTPError) as e:
         print(e)
         flash('Произошла ошибка при проверке', 'danger')
         return redirect(url_for('url', id=id))
