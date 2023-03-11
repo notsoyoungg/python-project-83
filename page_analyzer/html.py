@@ -9,6 +9,7 @@ def has_descriptions(tag):
 
 def get_info_about_site(url, id):
     r = requests.get(url)
+    r.raise_for_status()
     soup = BeautifulSoup(r.content, 'html.parser')
     h1 = soup.h1.get_text() if soup.h1 else ''
     title = soup.title.get_text() if soup.title else ''
