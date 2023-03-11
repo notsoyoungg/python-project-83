@@ -19,6 +19,7 @@ from .html import get_info_about_site
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
+
 def get_conn():
     return psycopg2.connect(os.getenv("DATABASE_URL"))
 
@@ -59,8 +60,6 @@ cur.close()
 conn.close()
 
 
-
-
 @app.route('/')
 def index():
     messages = get_flashed_messages(with_categories=True)
@@ -71,7 +70,7 @@ def index():
 def urls():
     conn = get_conn()
     if request.method == 'POST':
-        url = request.form['url']
+        url = request.form.get('url')
         if validators.url(url) and validators.length(url, max=255):
             normalized_url = normalize_url(url)
             try:
@@ -99,7 +98,10 @@ def urls():
                 flash('Страница уже существует', 'info')
                 return redirect(url_for('url', id=id))
         flash('Некорректный URL', 'danger')
-        return redirect(url_for('index'))
+        messages = get_flashed_messages(with_categories=True)
+        return render_template('index.html',
+                               url=url_for('index'),
+                               messages=messages), 422
     if request.method == 'GET':
         cur = conn.cursor()
         cur.execute('SELECT * FROM urls ORDER BY id DESC;')
