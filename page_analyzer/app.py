@@ -72,6 +72,7 @@ def urls_post():
                     flash('Страница успешно добавлена', 'info')
                     return redirect(url_for('url', id=id))
                 except psycopg2.errors.UniqueViolation:
+                    conn.rollback()
                     curs.execute('SELECT id FROM urls WHERE name = %s;',
                                  (normalized_url,))
                     id = curs.fetchone()['id']
