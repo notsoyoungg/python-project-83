@@ -13,10 +13,10 @@
             </tr>
             {% for site in sites %}
                 <tr>
-                    <td>{{ site[0] }}</td>
-                    <td><a href="{{ url_for('url', id=site[0]) }}">{{ site[1] }}</a></td>
-                    <td>{{ site[2].strftime('%Y-%m-%d') if site[2] }}</td>
-                    <td>{{ site[3] if site[3] }}</td>
+                    <td>{{ site['id'] }}</td>
+                    <td><a href="{{ url_for('url', id=site['id']) }}">{{ site['name'] }}</a></td>
+                    <td>{{ site['created_at'].strftime('%Y-%m-%d') if site['created_at'] }}</td>
+                    <td>{{ site['status_code'] if site['status_code'] }}</td>
                 </tr>
             {% endfor %}
           </tbody>
