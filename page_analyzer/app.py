@@ -115,7 +115,12 @@ def url_check(id):
                              INSERT INTO url_checks
                              (url_id, status_code, h1,
                              title, description, created_at)
-                             VALUES (%s, %s, %s, %s, %s, %s);
+                             VALUES (%(id)s,
+                                     %(status_code)s,
+                                     %(h1)s,
+                                     %(title)s,
+                                     %(description)s,
+                                     %(created_at)s);
                              ''',
                              data)
                 flash('Страница успешно проверена', 'success')
