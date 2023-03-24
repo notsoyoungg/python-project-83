@@ -13,11 +13,12 @@ import validators
 from urllib.parse import urlparse
 import datetime
 import requests
-from .html import get_info_about_site
+from .html import get_page_seo_data
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, ".env"))
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def normalize_url(url):
@@ -36,7 +37,7 @@ def index():
 
 @app.get('/urls')
 def urls_get():
-    with psycopg2.connect(os.getenv("DATABASE_URL"),
+    with psycopg2.connect(DATABASE_URL,
                           cursor_factory=DictCursor) as conn:
         with conn.cursor() as curs:
             curs.execute('''
@@ -58,7 +59,7 @@ def urls_post():
     url = request.form.get('url')
     if validators.url(url) and validators.length(url, max=255):
         normalized_url = normalize_url(url)
-        with psycopg2.connect(os.getenv("DATABASE_URL"),
+        with psycopg2.connect(DATABASE_URL,
                               cursor_factory=DictCursor) as conn:
             with conn.cursor() as curs:
                 try:
@@ -85,7 +86,7 @@ def urls_post():
 
 @app.route('/urls/<id>', methods=('GET',))
 def url(id):
-    with psycopg2.connect(os.getenv("DATABASE_URL"),
+    with psycopg2.connect(DATABASE_URL,
                           cursor_factory=DictCursor) as conn:
         with conn.cursor() as curs:
             curs.execute('SELECT * FROM urls WHERE id = %s;', (id,))
@@ -104,13 +105,14 @@ def url(id):
 
 @app.route('/urls/<id>/checks', methods=('POST',))
 def url_check(id):
-    with psycopg2.connect(os.getenv("DATABASE_URL"),
+    with psycopg2.connect(DATABASE_URL,
                           cursor_factory=DictCursor) as conn:
         with conn.cursor() as curs:
             curs.execute('SELECT name FROM urls WHERE id = %s;', (id,))
             url = curs.fetchone()['name']
             try:
-                data = get_info_about_site(url, id)
+                data = get_page_seo_data(url)
+                data['id'] = id
                 curs.execute('''
                              INSERT INTO url_checks
                              (url_id, status_code, h1,
